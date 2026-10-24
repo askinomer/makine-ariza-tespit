@@ -1,0 +1,59 @@
+# YALNIZCA HAT TESTİ: sentetik veriyle tüm betikleri hızlıca çalıştırmak için.
+# Gerçek veriden tamamen ayrı klasörler kullanır; sonuçları raporda kullanmayın.
+
+seed: 42
+
+paths:
+  raw_dir: data/synthetic
+  processed_dir: data/processed_synthetic
+  manifest: data/synthetic_manifest.csv
+  split: data/synthetic_split.csv
+  checkpoints: checkpoints_synthetic
+  results: results_synthetic
+
+data:
+  machine_types: [fan]
+  machine_ids: null
+  expected_sr: 16000
+  min_duration_s: 2.1
+  silence_rms: 1.0e-5
+  split_ratios: {train: 0.70, val: 0.15, cal: 0.15}
+
+features:
+  sr: 16000
+  n_fft: 1024
+  win_length: 1024
+  hop_length: 512
+  window: hann
+  n_mels: 64
+  power: 2.0
+  fmin: 0
+  fmax: 8000
+  top_db: 80.0
+  ref: 1.0
+  frames: 64
+  window_hop: 32
+  std_eps: 1.0e-6
+
+baseline:
+  n_estimators: 200
+  random_state: 42
+
+autoencoder:
+  bottleneck: 128
+  lr: 0.001
+  batch_size: 32
+  max_epochs: 15
+  patience: 7
+  num_workers: 0
+  device: auto
+
+scoring:
+  aggregation: mean
+  threshold_percentile: 95
+  pauc_max_fpr: 0.1
+  bootstrap: 200
+
+noise:
+  snr_db: [20, 10]
+  seed: 1234

@@ -1,0 +1,21 @@
+# Ham veri ve büyük dosyalar Git'e girmez (README'deki indirme adımına bakın)
+data/raw/
+data/processed/
+data/processed_synthetic/
+data/synthetic/
+data/synthetic_*.csv
+checkpoints/
+checkpoints_synthetic/
+results_synthetic/
+*.zip
+*.pt
+
+# data/split.csv ve data/manifest.csv Git'te TUTULUR: bölünme sabit kalmalı
+
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+.DS_Store

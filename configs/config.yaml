@@ -1,0 +1,60 @@
+# Sesten makine arıza tespiti — tek yapılandırma dosyası.
+# Bütün betikler bu dosyayı okur. Bir ayarı değiştirdiğinizde değişikliği
+# deney defterine (results/runs.csv) not edin.
+
+seed: 42
+
+paths:
+  raw_dir: data/raw            # dev_data_fan.zip buraya açılır (data/raw/fan/train, data/raw/fan/test)
+  processed_dir: data/processed
+  manifest: data/manifest.csv
+  split: data/split.csv
+  checkpoints: checkpoints
+  results: results
+
+data:
+  machine_types: [fan]         # İlk kapsam: yalnızca fan
+  machine_ids: null            # null = dosya adlarında bulunan tüm kimlikler; örn. ["id_00"] ile tek kimlik prototipi
+  expected_sr: 16000
+  min_duration_s: 2.1          # 64 çerçeveden kısa kayıtlar kullanılamaz
+  silence_rms: 1.0e-5          # Bu RMS'in altındaki kayıtlar "sessiz" sayılır
+  split_ratios: {train: 0.70, val: 0.15, cal: 0.15}
+
+features:
+  sr: 16000
+  n_fft: 1024
+  win_length: 1024
+  hop_length: 512
+  window: hann
+  n_mels: 64
+  power: 2.0
+  fmin: 0
+  fmax: 8000
+  top_db: 80.0
+  ref: 1.0
+  frames: 64                   # pencere: 64 mel × 64 zaman adımı (~2 s)
+  window_hop: 32               # pencere kayması
+  std_eps: 1.0e-6
+
+baseline:                      # Isolation Forest referansı
+  n_estimators: 200
+  random_state: 42
+
+autoencoder:
+  bottleneck: 128
+  lr: 0.001
+  batch_size: 32
+  max_epochs: 50
+  patience: 7
+  num_workers: 0
+  device: auto                 # auto | cpu | cuda
+
+scoring:
+  aggregation: mean            # Ana kayıt skoru: pencere MSE ortalaması (testten önce sabitlendi)
+  threshold_percentile: 95     # Normal kalibrasyon skorlarının 95. persentili
+  pauc_max_fpr: 0.1
+  bootstrap: 1000              # Güven aralıkları için bootstrap tekrar sayısı
+
+noise:
+  snr_db: [20, 10]
+  seed: 1234
