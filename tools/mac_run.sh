@@ -113,6 +113,6 @@ say "4/4 Eğitim ve değerlendirme (yaklaşık 15-30 dk). Ayrıntılı günlük:
 SKIP_DOWNLOAD=1 PY=.venv/bin/python bash tools/run_real.sh || fail "hat yarıda kaldı"
 
 say "BİTTİ. Özet:"
-sed -n '/eşit ağırlıklı ortalaması/,/^$/p' results/summary.md 2>/dev/null | head -8
+grep -A 6 'eşit ağırlıklı ortalaması' results/summary.md 2>/dev/null | grep '^|'
 echo
 echo "Claude'a 'bitti' yazabilirsin. Demo için:  .venv/bin/streamlit run app/app.py"
