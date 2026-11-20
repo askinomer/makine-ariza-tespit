@@ -31,7 +31,10 @@ from src.data import load_split, machine_keys, subset
 from src.detectors import METHOD_LABELS, METHODS, detector_dir, load_detector
 from src.features import load_logmels
 from src.metrics import all_metrics, bootstrap_ci
+from src.plotstyle import CLASS_COLORS, GRID, INK2, METHOD_COLORS, MUTED, apply as apply_style, seq_cmap, text_on
 from src.utils import ensure_dir, git_commit, load_config
+
+apply_style()
 
 METRIC_COLS = ["auc", "pauc", "precision", "recall", "f1", "far"]
 
@@ -43,33 +46,44 @@ def tag_of(method, seed):
 def plot_distribution(scores, y, thr, title, path):
     fig, ax = plt.subplots(figsize=(6, 3.5))
     bins = np.histogram_bin_edges(scores, bins=40)
-    ax.hist(scores[y == 0], bins=bins, alpha=0.6, label=f"normal (n={int((y == 0).sum())})")
-    ax.hist(scores[y == 1], bins=bins, alpha=0.6, label=f"anomali (n={int((y == 1).sum())})")
-    ax.axvline(thr, c="k", ls="--", lw=1, label="eşik (kalibrasyon p95)")
+    for cls, lab, name in ((0, "normal", "normal"), (1, "anomaly", "anomali")):
+        c = CLASS_COLORS[lab]
+        ax.hist(scores[y == cls], bins=bins, histtype="stepfilled", color=c, alpha=0.22, lw=0)
+        ax.hist(scores[y == cls], bins=bins, histtype="step", color=c, lw=1.6,
+                label=f"{name} (n={int((y == cls).sum())})")
+    ax.axvline(thr, color=INK2, lw=1.2)
+    ax.annotate("eşik (kalibrasyon p95)", xy=(thr, 1), xycoords=("data", "axes fraction"),
+                xytext=(4, -4), textcoords="offset points", ha="left", va="top", fontsize=8, color=INK2)
     ax.set_xlabel("anomali skoru")
     ax.set_ylabel("kayıt sayısı")
-    ax.set_title(title, fontsize=10)
-    ax.legend(fontsize=8)
+    ax.set_title(title)
+    ax.grid(axis="x", visible=False)
+    ax.legend(loc="upper right")
     fig.tight_layout()
-    fig.savefig(path, dpi=110)
+    fig.savefig(path)
     plt.close(fig)
 
 
 def plot_confusion(m, title, path):
     cm = np.array([[m["tn"], m["fp"]], [m["fn"], m["tp"]]])
-    fig, ax = plt.subplots(figsize=(3.6, 3.2))
-    ax.imshow(cm, cmap="Blues")
+    fig, ax = plt.subplots(figsize=(3.8, 3.3))
+    # Satır bazında oran rengi: sınıf büyüklükleri çok farklı olduğu için ham sayı yanıltır
+    rates = cm / np.maximum(cm.sum(axis=1, keepdims=True), 1)
+    ax.imshow(rates, cmap=seq_cmap(), vmin=0, vmax=1)
     for i in range(2):
         for j in range(2):
-            ax.text(j, i, cm[i, j], ha="center", va="center", fontsize=12,
-                    color="white" if cm[i, j] > cm.max() / 2 else "black")
+            ax.text(j, i, f"{cm[i, j]}\n({rates[i, j]:.0%})", ha="center", va="center", fontsize=10.5,
+                    color=text_on(rates[i, j], 1.0))
     ax.set_xticks([0, 1], ["normal", "anomali şüphesi"])
     ax.set_yticks([0, 1], ["normal", "anomali"])
     ax.set_xlabel("tahmin")
     ax.set_ylabel("gerçek")
+    ax.grid(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
     ax.set_title(title, fontsize=9)
     fig.tight_layout()
-    fig.savefig(path, dpi=110)
+    fig.savefig(path)
     plt.close(fig)
 
 
@@ -194,15 +208,21 @@ def main():
             if (m2, i2) != (mt, mid) or len(np.unique(ex["y"])) < 2:
                 continue
             fpr, tpr, _ = roc_curve(ex["y"], ex["scores"])
-            ax.plot(fpr, tpr, label=f"{METHOD_LABELS[method]}" + (f" s{seed}" if method == "cnn_ae" else ""))
-        ax.plot([0, 1], [0, 1], c="gray", lw=0.8, ls=":")
-        ax.axvspan(0, cfg["scoring"]["pauc_max_fpr"], color="gray", alpha=0.08, label="pAUC bölgesi")
+            seeds_here = sorted(s for (m3, s, a3, b3) in curves if m3 == method and (a3, b3) == (mt, mid))
+            first = seed == seeds_here[0]
+            alpha = 1.0 if (method != "cnn_ae" or first) else 0.45
+            lab = METHOD_LABELS[method] + (f" (tohum {seed})" if method == "cnn_ae" and len(seeds_here) > 1 else "")
+            ax.plot(fpr, tpr, color=METHOD_COLORS[method], alpha=alpha, lw=2 if alpha == 1 else 1.2, label=lab)
+        ax.plot([0, 1], [0, 1], color=MUTED, lw=0.8)
+        ax.axvspan(0, cfg["scoring"]["pauc_max_fpr"], color=GRID, alpha=0.6, lw=0, label="pAUC bölgesi")
         ax.set_xlabel("yanlış alarm oranı (FPR)")
         ax.set_ylabel("yakalama oranı (TPR)")
-        ax.set_title(f"ROC — {mt} {mid}", fontsize=10)
-        ax.legend(fontsize=7, loc="lower right")
+        ax.set_title(f"ROC — {mt} {mid}")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1.01)
+        ax.legend(fontsize=7.5, loc="lower right")
         fig.tight_layout()
-        fig.savefig(fig_dir / f"roc_{mt}_{mid}.png", dpi=110)
+        fig.savefig(fig_dir / f"roc_{mt}_{mid}.png")
         plt.close(fig)
 
     # Markdown özeti

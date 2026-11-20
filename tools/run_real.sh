@@ -25,13 +25,16 @@ step() {
   local name=$1; shift
   echo "running: $name ($(date '+%H:%M:%S'))" > "$STATUS"
   echo "=== $(date '+%H:%M:%S') $name: $*" >> "$LOG"
+  echo "  > $(date '+%H:%M:%S') $name"
   local t0=$SECONDS
   if ! "$@" >> "$LOG" 2>&1; then
     echo "failed: $name" > "$STATUS"
     echo "!!! $name başarısız" >> "$LOG"
+    echo "  ! $name başarısız; son satırlar:"; tail -n 15 "$LOG"
     exit 1
   fi
   echo "--- $name bitti ($((SECONDS - t0)) s)" >> "$LOG"
+  echo "    tamam ($((SECONDS - t0)) s)"
 }
 
 n_wav=$(find data/raw -name '*.wav' 2>/dev/null | wc -l | tr -d ' ')
