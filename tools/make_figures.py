@@ -27,6 +27,11 @@ def tr(v, nd=3):
     return f"{v:.{nd}f}".replace(".", ",")
 
 
+def pct(v, nd=1):
+    """Türkçe yüzde: 0.0308 -> %3,1"""
+    return "%" + tr(v * 100, nd)
+
+
 def tr_axis(ax, axis="x", nd=1):
     from matplotlib.ticker import FuncFormatter
     f = FuncFormatter(lambda v, _: tr(v, nd))
@@ -64,7 +69,10 @@ def auc_dumbbell(stats, out):
             v, (lo, hi) = vals[k]
             ax.plot([lo, hi], [y + off, y + off], color=col, lw=2.2, alpha=0.55, zorder=2, solid_capstyle="butt")
             ax.scatter([v], [y + off], s=170, color=col, zorder=3, edgecolor=PAPER, linewidth=1.5)
-            ax.text(hi + 0.008, y + off, tr(v), va="center", ha="left", fontsize=17,
+            # etiket, sağdaki referans çizgisiyle çakışırsa çizginin sağına kaydırılır
+            clash = base is not None and hi + 0.004 <= base <= hi + 0.075
+            ax.text((base + 0.012) if clash else (hi + 0.008), y + off, tr(v), va="center",
+                    ha="left", fontsize=17,
                     color=INK if k == "cnn_ae" else SOFT, fontweight="bold" if k == "cnn_ae" else "normal")
         if base is not None:
             ax.plot([base, base], [y - 0.36, y + 0.36], color=INK, lw=2.5, zorder=4)
@@ -112,9 +120,9 @@ def noise_panels(noise_rows, out):
             else:
                 yr = [get(fixed, m, "özgün", key)] + [get(recal, m, c, key) for c in conds[1:]]
                 ax.plot(x, yr, color=col, lw=2, ls=(0, (5, 4)), marker="o", ms=7, mfc=PAPER, zorder=2)
-                ends += [(ys[-1], tr(ys[-1], 2), col), (yr[-1], tr(yr[-1], 2) + " (yeniden)", col)]
+                ends += [(ys[-1], pct(ys[-1]), col), (yr[-1], pct(yr[-1]) + " (yeniden)", col)]
         if ends:
-            lo_, hi_ = 0, max(0.3, max(e[0] for e in ends) + 0.12)
+            lo_, hi_ = 0, max(0.2, max(e[0] for e in ends) + 0.05)
             gap, placed = (hi_ - lo_) * 0.075, []
             for v, t, col in sorted(ends):
                 yv = max(v, placed[-1] + gap) if placed else v
@@ -131,11 +139,14 @@ def noise_panels(noise_rows, out):
             ax.axhline(0.5, color=SOFT, lw=1, ls=(0, (4, 4)))
             tr_axis(ax, "y", 1)
         else:
-            top = max(0.3, max(float(r["far"]) for r in noise_rows) + 0.12)
+            top = max(0.2, max(float(r["far"]) for r in noise_rows) + 0.05)
             ax.set_ylim(0, min(1.0, top))
+            step = 0.05 if top <= 0.3 else 0.1
+            ax.set_yticks([round(i * step, 2) for i in range(int(top / step) + 1)])
             ax.axhline(0.05, color=SOFT, lw=1, ls=(0, (4, 4)))
             ax.text(-0.28, 0.047, "%5 hedef", fontsize=15, color=SOFT, ha="left", va="top")
-            tr_axis(ax, "y", 1)
+            from matplotlib.ticker import FuncFormatter
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: "%" + f"{v * 100:.0f}"))
     h = [Line2D([], [], color=ACCENT, lw=3, marker="o", ms=9, label="CNN autoencoder"),
          Line2D([], [], color=GREY, lw=3, marker="o", ms=9, label="Isolation Forest"),
          Line2D([], [], color=SOFT, lw=2, label="sabit eşik (özgün kalibrasyon)"),
