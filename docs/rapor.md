@@ -199,7 +199,7 @@ Precision'ın yüksek görünmesi (ortalama 0,82 ve 0,89) test kümesinin yapıs
 
 ### 6.3 Tohumlar arası tutarlılık ve eğitim
 
-CNN AE'nin sonuçları tohumdan neredeyse bağımsızdır: üç tohumun AUC'leri her kimlikte en fazla 0,011 farklıdır. Kimlik ortalamasında AUC 0,638 ± 0,003, pAUC 0,583 ± 0,004 ve F1 0,319 ± 0,010'dur.
+CNN AE'nin sonuçları tohumdan neredeyse bağımsızdır: üç tohumun AUC'leri her kimlikte en fazla 0,012 farklıdır. Kimlik ortalamasında AUC 0,638 ± 0,003, pAUC 0,583 ± 0,004 ve F1 0,319 ± 0,010'dur.
 
 Erken durdurma, en iyi doğrulama kaybına 22. ile 38. epoch arasında ulaştı; hiçbir eğitim 50 epoch sınırına dayanmadı. Eğitimden önceki aşırı öğrenme testinde, dört kimliğin her birinde 20 kayıtlık alt kümede kayıp yaklaşık 1,01'den 0,19–0,23'e indi; model ve eğitim döngüsü beklendiği gibi çalışıyordu.
 
