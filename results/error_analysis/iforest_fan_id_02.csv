@@ -1,0 +1,12 @@
+path,label,score,threshold,kind
+data/raw/fan/test/normal_id_02_00000048.wav,normal,0.5875787286235078,0.5870515248788701,yanlış alarm (FP)
+data/raw/fan/test/anomaly_id_02_00000182.wav,anomaly,0.35657698289364764,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000148.wav,anomaly,0.3583013344471805,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000305.wav,anomaly,0.3583187323849629,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000119.wav,anomaly,0.3593406558118624,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000118.wav,anomaly,0.35941932868796095,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000011.wav,anomaly,0.36013305807648227,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000298.wav,anomaly,0.3605178493560298,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000103.wav,anomaly,0.3606676305808941,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000289.wav,anomaly,0.3607938289129978,0.5870515248788701,kaçırılan anomali (FN)
+data/raw/fan/test/anomaly_id_02_00000316.wav,anomaly,0.3609264476053684,0.5870515248788701,kaçırılan anomali (FN)

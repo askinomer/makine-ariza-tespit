@@ -1,0 +1,2 @@
+timestamp,git_commit,methods,seeds,n_evaluations,note
+2026-11-21T06:40:55,65ccbac,iforest cnn_ae,42 43 44,16,"ilk son test; ayarlar config.yaml başlangıç değerleri, test sonucuna göre değişiklik yapılmadı"

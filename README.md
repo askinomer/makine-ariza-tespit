@@ -13,6 +13,27 @@ Araştırma sorusu: *CNN autoencoder referans yöntemi geçiyor mu ve ek gürül
 > **Kapsam sınırı.** Sistem ses anomalisini saptar; arızanın nedenini (ör. rulman) veya kalan ömrü tahmin etmez.
 > Anomali skoru kalibre edilmiş bir arıza olasılığı değildir.
 
+## Sonuçlar (gerçek veri, son test 21.11.2026, git 65ccbac)
+
+Son test bir kez çalıştırıldı (`results/test_access_log.csv`). CNN AE değerleri üç tohumun (42, 43, 44) ortalamasıdır;
+köşeli parantez = %95 bootstrap güven aralığı. Ayrıntılar: `results/summary.md`, `results/noise_summary.md`, `docs/rapor.md`.
+
+| Kimlik | Isolation Forest AUC | CNN AE AUC | DCASE resmî baseline AUC |
+|---|---|---|---|
+| id_00 | 0,532 | 0,507 | 0,540 |
+| id_02 | 0,681 | 0,696 | 0,722 |
+| id_04 | 0,492 | 0,499 | 0,622 |
+| id_06 | 0,616 | **0,851** | 0,723 |
+| **Ortalama** | **0,580** | **0,638** | 0,652 |
+
+- CNN AE − IF farkı (ortalama AUC): **+0,058 [0,036; 0,081]**; neredeyse tamamı id_06'dan. id_00 ve id_04'te iki yöntem de şans düzeyinde.
+- Eşik (normal kalibrasyon p95): testte yanlış alarm ortalama %6,1 (hedef %5), yakalama (recall) CNN AE'de %22,3, IF'de %6,7.
+- Beyaz gürültü (+20/+10 dB) AUC'yi düşürmedi; sabit eşikte yanlış alarm ve yakalama azaldı (CNN AE +10 dB: %3,1 ve %16,5),
+  eşik gürültülü normal kayıtlarla yeniden kalibre edilince %5,7 ve %21,0'a döndü.
+- DCASE baseline makine türü başına tek model ve tüm eğitim verisiyle eğitilir; karşılaştırma yaklaşıktır (bkz. rapor 7.2).
+
+Sunum grafikleri: `results/figures/sunum_auc.png`, `sunum_gurultu.png`, `sunum_hata.png` (`python tools/make_figures.py`).
+
 ---
 
 ## 1. Hızlı başlangıç
@@ -36,6 +57,12 @@ python run_pipeline.py --seeds 42 43 44         # zaman varsa 3 tohum tekrarı
 # 4) Demo
 streamlit run app/app.py
 ```
+
+**macOS'ta tek komut (gerçek çalıştırma böyle yapıldı):** proje klasöründe `bash tools/mac_run.sh`. Betik uv ile
+Python 3.13'ü ve paketleri proje klasörüne kurar, veriyi indirir (1,4 GB), ardından `tools/run_real.sh` ile tüm hattı
+(hazırlık → özellik → IF → aşırı öğrenme testi → 3 tohumla CNN AE → kalibrasyon → son test → gürültü) çalıştırır.
+İlerleme `logs/run_real.log` dosyasındadır. Veri zaten varsa yalnızca hat için: `SKIP_DOWNLOAD=1 PY=.venv/bin/python bash tools/run_real.sh`.
+Rapor sayıları için ardından: `python tools/collect_results.py`, `python tools/report_stats.py`, `python tools/make_figures.py`.
 
 > ⚠️ Sentetik veri yalnızca kodun çalıştığını gösterir; o sayıları raporda **kullanmayın**.
 > Sentetik çıktılar ayrı klasörlere yazılır (`*_synthetic`), gerçek sonuçlarla karışmaz.
@@ -101,9 +128,11 @@ src/            data.py, features.py, models.py, detectors.py, metrics.py, noise
 scripts/        hattın betikleri (yukarıdaki tablo)
 app/            app.py — Streamlit demosu
 tests/          pytest: bölünme/sızıntı, özellikler, model, ölçütler, gürültü, uçtan uca + demo
-tools/          make_synthetic_dataset.py — DCASE düzeninde küçük sentetik veri
+tools/          mac_run.sh ve run_real.sh (tek komutla gerçek çalıştırma), collect_results.py (sonuç özeti JSON),
+                report_stats.py (tohum ortalamalı AUC ve eşleştirilmiş bootstrap farkı), make_figures.py (sunum grafikleri),
+                make_synthetic_dataset.py (DCASE düzeninde küçük sentetik veri)
 notebooks/      colab_run.ipynb — GPU'suz ekip için Colab'da çalıştırma
-docs/           rapor_taslagi.md — rapor iskeleti (yöntem bölümü hazır, sonuçlar [DOLDUR])
+docs/           rapor.md — raporun Markdown kopyası (gerçek sonuçlarla)
 data/           raw/ (Git'e girmez), processed/ (Git'e girmez), manifest.csv, split.csv (Git'te)
 checkpoints/    model ağırlıkları, scaler, eşik (Git'e girmez — teslimde ayrı paylaşın)
 results/        metrikler, grafikler, deney defteri
@@ -143,7 +172,7 @@ ayrı bir tabloda gösterir. Bunlar testten sonra bakıldığı için model seç
 | 4 | `calibrate.py`, kalibrasyon skor dağılımları | tüm kimlikler, kayıp eğrileri |
 | 5 | **ayarları dondur** → `evaluate.py` (bir kez) | demoyu gerçek modellerle dene |
 | 6 | `noise_experiment.py --recalibrate` | `results/error_analysis/` dosyalarını dinle |
-| 7 | rapor ve kaynakça (`docs/rapor_taslagi.md`) | demo arayüzü, sunum |
+| 7 | rapor ve kaynakça (`docs/rapor.md`) | demo arayüzü, sunum |
 | 8 | sonuçlar ve sınırlılıklar | temiz makinede README'den yeniden kurulum provası |
 
 Süre daralırsa: tek kimlikte uçtan uca sistem (IF + AE + doğru bölünme + kalibrasyon + son test + demo) asgari teslimdir.
@@ -160,7 +189,9 @@ Gerçek veriyle aynı boyutta (bir kimlik: 900 eğitim + 450 test kaydı) sentet
 | CNN AE eğitimi (~5.700 pencere, epoch başına ~4 s, erken durdurmayla 17 epoch) | ~75 s |
 | Tüm hat (bir kimlik, gürültü deneyi dahil) | ~2,5 dk |
 
-Dört fan kimliği için CPU'da toplam ~10–15 dakika beklenir; GPU şart değil. Kesin kayıt sayılarını `prepare_data.py` yazdırır.
+Gerçek çalıştırma (MacBook Pro, Apple Silicon, yalnızca CPU, 4 kimlik, 3 tohum): tüm hat **~24 dakika**
+(hazırlık 23 s, özellik 4 s, IF 7 s, aşırı öğrenme testi 65 s, CNN AE tohum başına ~7 dk / kimlik başına 85–135 s,
+son test 47 s, gürültü deneyi 49 s); veri indirme bağlantıya göre ayrıca. GPU şart değil.
 
 ---
 

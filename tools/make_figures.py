@@ -1,7 +1,7 @@
 """Sunum ve rapor için özet grafikler (results/report_stats.json ve results/noise_summary.csv'den).
 
     python tools/report_stats.py      # önce
-    python tools/make_figures.py      # results/figures/sunum_*.png
+    python tools/make_figures.py      # results/figures/sunum_auc.png, sunum_gurultu.png, sunum_hata.png
 
 Grafikler model veya test sonucu üretmez; yalnızca kaydedilmiş sonuçları çizer.
 """
@@ -16,7 +16,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-INK, PAPER, ACCENT, GREY, SOFT, LINE = "#16202C", "#F6F5F1", "#2F6FD6", "#8A94A3", "#4A5568", "#C6CDD6"
+# Sunum paletiyle aynı (deck.css); ACCENT metin kontrastı için koyulaştırıldı
+INK, PAPER, ACCENT, GREY, SOFT, LINE = "#16202C", "#F6F5F1", "#2A64C4", "#8A94A3", "#4A5568", "#C6CDD6"
 # DCASE 2020 Görev 2 resmî baseline, fan, geliştirme testi (README, y-kawagu/dcase2020_task2_baseline)
 DCASE_BASELINE_AUC = {"id_00": 0.5396, "id_02": 0.7219, "id_04": 0.6221, "id_06": 0.7228}
 LABEL = {"iforest": "Isolation Forest", "cnn_ae": "CNN autoencoder"}
@@ -158,9 +159,65 @@ def noise_panels(noise_rows, out):
     plt.close(fig)
 
 
+def score_dist_panels(results_dir, ids, seed, out):
+    """CNN AE test skorlarının sınıf içi dağılımı (yüzde), kimlik başına bir panel; eşik = kalibrasyon p95."""
+    import numpy as np
+    from matplotlib.ticker import FuncFormatter
+
+    def load(kind, mid):
+        p = os.path.join(results_dir, "scores", f"{kind}_cnn_ae_seed{seed}_fan_{mid}.csv")
+        rows = list(csv.DictReader(open(p, encoding="utf-8")))
+        y = np.array([1 if os.path.basename(r["path"]).startswith("anomaly") else 0 for r in rows])
+        return y, np.array([float(r["score"]) for r in rows])
+
+    fig, axes = plt.subplots(1, len(ids), figsize=(16, 6.4), dpi=200, sharey=True)
+    fig.patch.set_facecolor(PAPER)
+    ymax = 0
+    panels = []
+    for mid in ids:
+        y, s = load("test", mid)
+        _, cs = load("cal", mid)
+        thr = float(np.percentile(cs, 95))
+        edges = np.linspace(s.min(), s.max(), 25)
+        hn = np.histogram(s[y == 0], bins=edges)[0] / max((y == 0).sum(), 1)
+        ha = np.histogram(s[y == 1], bins=edges)[0] / max((y == 1).sum(), 1)
+        ymax = max(ymax, hn.max(), ha.max())
+        from sklearn.metrics import roc_auc_score
+        panels.append((mid, edges, hn, ha, thr, roc_auc_score(y, s), float(np.mean(s[y == 1] > thr))))
+    for ax, (mid, edges, hn, ha, thr, auc, rec) in zip(np.atleast_1d(axes), panels):
+        style(ax)
+        ax.grid(axis="x", visible=False)
+        ax.grid(axis="y", color=LINE, lw=0.8, alpha=0.7)
+        c = (edges[:-1] + edges[1:]) / 2
+        w = edges[1] - edges[0]
+        ax.bar(c - w / 4, hn, width=w / 2, color=GREY, label="normal")
+        ax.bar(c + w / 4, ha, width=w / 2, color=ACCENT, label="anomali")
+        ax.axvline(thr, color=INK, lw=2, ls=(0, (5, 4)))
+        ax.text(thr + w * 0.3, ymax * 1.08, "eşik " + tr(thr), fontsize=16, color=INK, va="top")
+        ax.set_title(f"{mid} · AUC {tr(auc)} · yakalama %{tr(rec * 100, 0)}", fontsize=21, color=INK, loc="left", pad=14)
+        ax.tick_params(axis="x", labelsize=17)
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: tr(v, 2)))
+        ax.set_xlabel("anomali skoru", fontsize=18, color=SOFT, labelpad=8)
+    axes0 = np.atleast_1d(axes)[0]
+    axes0.set_ylim(0, ymax * 1.12)
+    axes0.yaxis.set_major_formatter(FuncFormatter(lambda v, _: "%" + f"{v * 100:.0f}"))
+    axes0.set_ylabel("sınıftaki kayıtların payı", fontsize=18, color=SOFT, labelpad=10)
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    h = [Patch(color=GREY, label="normal test kaydı"), Patch(color=ACCENT, label="arızalı test kaydı"),
+         Line2D([], [], color=INK, lw=2, ls=(0, (5, 4)), label="eşik (normal kalibrasyon p95)")]
+    fig.legend(handles=h, loc="lower center", ncol=3, frameon=False, fontsize=17, labelcolor=INK,
+               bbox_to_anchor=(0.5, 0.0), columnspacing=2.0)
+    fig.tight_layout(w_pad=3, rect=(0, 0.08, 1, 1))
+    fig.savefig(out, facecolor=PAPER)
+    plt.close(fig)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--results", default=os.path.join(ROOT, "results"))
+    ap.add_argument("--dist-ids", default="id_06,id_00", help="skor dağılımı çizilecek kimlikler")
+    ap.add_argument("--dist-seed", type=int, default=42)
     args = ap.parse_args()
     figdir = os.path.join(args.results, "figures")
     os.makedirs(figdir, exist_ok=True)
@@ -170,6 +227,10 @@ def main():
     if os.path.exists(noise_p):
         rows = list(csv.DictReader(open(noise_p, encoding="utf-8")))
         noise_panels(rows, os.path.join(figdir, "sunum_gurultu.png"))
+    ids = [i.strip() for i in args.dist_ids.split(",") if i.strip()]
+    if all(os.path.exists(os.path.join(args.results, "scores", f"{k}_cnn_ae_seed{args.dist_seed}_fan_{i}.csv"))
+           for i in ids for k in ("test", "cal")):
+        score_dist_panels(args.results, ids, args.dist_seed, os.path.join(figdir, "sunum_hata.png"))
     print("Yazıldı:", figdir)
 
 

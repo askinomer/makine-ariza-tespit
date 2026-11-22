@@ -74,7 +74,7 @@ def plot_spectrogram(logmel, fcfg, highlight=None):
 
 
 def plot_window_scores(centers, errs, threshold, top_idx):
-    fig, ax = plt.subplots(figsize=(10, 2.6))
+    fig, ax = plt.subplots(figsize=(10, 2.9))
     ax.plot(centers, errs, marker="o", ms=4, lw=1.2, label="pencere yeniden oluşturma hatası")
     ax.scatter(centers[top_idx], errs[top_idx], s=90, facecolors="none", edgecolors="crimson", lw=1.6,
                label="en yüksek 3 pencere", zorder=3)
@@ -82,7 +82,9 @@ def plot_window_scores(centers, errs, threshold, top_idx):
     ax.set_xlabel("pencere merkezi (s)")
     ax.set_ylabel("MSE")
     ax.grid(alpha=0.3)
-    ax.legend(fontsize=8, loc="upper left")
+    ax.margins(y=0.15)
+    # açıklama grafiğin üstünde: noktaların üzerine binmez
+    ax.legend(fontsize=8, loc="lower center", bbox_to_anchor=(0.5, 1.01), ncol=3, frameon=False)
     fig.tight_layout()
     return fig
 

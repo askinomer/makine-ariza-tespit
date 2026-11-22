@@ -1,0 +1,33 @@
+run_id,timestamp,git_commit,method,machine_type,machine_id,seed,feature_settings,model,train_time_s,best_epoch,val_loss,threshold,notes
+20261121-061815_iforest_fan_id_00_s42,2026-11-21T06:18:15,65ccbac,iforest,fan,id_00,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",IsolationForest(n_estimators=200) on mean+std log mel,0.2,,0.4084,,val_loss = normal doğrulama skor ortalaması
+20261121-061815_iforest_fan_id_02_s42,2026-11-21T06:18:15,65ccbac,iforest,fan,id_02,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",IsolationForest(n_estimators=200) on mean+std log mel,0.2,,0.4071,,val_loss = normal doğrulama skor ortalaması
+20261121-061815_iforest_fan_id_04_s42,2026-11-21T06:18:15,65ccbac,iforest,fan,id_04,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",IsolationForest(n_estimators=200) on mean+std log mel,0.2,,0.4139,,val_loss = normal doğrulama skor ortalaması
+20261121-061815_iforest_fan_id_06_s42,2026-11-21T06:18:15,65ccbac,iforest,fan,id_06,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",IsolationForest(n_estimators=200) on mean+std log mel,0.2,,0.4160,,val_loss = normal doğrulama skor ortalaması
+20261121-062114_cnn_ae_fan_id_00_s42,2026-11-21T06:21:14,65ccbac,cnn_ae,fan,id_00,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",112.9,31,0.27653,,
+20261121-062243_cnn_ae_fan_id_02_s42,2026-11-21T06:22:43,65ccbac,cnn_ae,fan,id_02,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",89.0,23,0.40552,,
+20261121-062433_cnn_ae_fan_id_04_s42,2026-11-21T06:24:33,65ccbac,cnn_ae,fan,id_04,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",109.6,29,0.33582,,
+20261121-062617_cnn_ae_fan_id_06_s42,2026-11-21T06:26:17,65ccbac,cnn_ae,fan,id_06,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",104.4,27,0.32302,,
+20261121-062833_cnn_ae_fan_id_00_s43,2026-11-21T06:28:33,65ccbac,cnn_ae,fan,id_00,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",134.8,38,0.27603,,
+20261121-062958_cnn_ae_fan_id_02_s43,2026-11-21T06:29:58,65ccbac,cnn_ae,fan,id_02,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",84.8,22,0.40447,,
+20261121-063139_cnn_ae_fan_id_04_s43,2026-11-21T06:31:39,65ccbac,cnn_ae,fan,id_04,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",101.2,27,0.33547,,
+20261121-063321_cnn_ae_fan_id_06_s43,2026-11-21T06:33:21,65ccbac,cnn_ae,fan,id_06,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",101.8,28,0.32207,,
+20261121-063516_cnn_ae_fan_id_00_s44,2026-11-21T06:35:16,65ccbac,cnn_ae,fan,id_00,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",113.9,32,0.27762,,
+20261121-063646_cnn_ae_fan_id_02_s44,2026-11-21T06:36:46,65ccbac,cnn_ae,fan,id_02,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",90.3,24,0.40594,,
+20261121-063812_cnn_ae_fan_id_04_s44,2026-11-21T06:38:12,65ccbac,cnn_ae,fan,id_04,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",86.1,22,0.33671,,
+20261121-064003_cnn_ae_fan_id_06_s44,2026-11-21T06:40:03,65ccbac,cnn_ae,fan,id_06,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32","ConvAE(bottleneck=128,lr=0.001,bs=32)",110.3,31,0.32381,,
+20261121-064004_calib_iforest_fan_id_00_s42,2026-11-21T06:40:04,65ccbac,iforest,fan,id_00,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.514073,p95 of 136 normal cal records
+20261121-064004_calib_cnn_ae_fan_id_00_s42,2026-11-21T06:40:04,65ccbac,cnn_ae,fan,id_00,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.322278,p95 of 136 normal cal records
+20261121-064005_calib_cnn_ae_fan_id_00_s43,2026-11-21T06:40:05,65ccbac,cnn_ae,fan,id_00,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.322870,p95 of 136 normal cal records
+20261121-064005_calib_cnn_ae_fan_id_00_s44,2026-11-21T06:40:05,65ccbac,cnn_ae,fan,id_00,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.323682,p95 of 136 normal cal records
+20261121-064005_calib_iforest_fan_id_02_s42,2026-11-21T06:40:05,65ccbac,iforest,fan,id_02,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.587052,p95 of 138 normal cal records
+20261121-064005_calib_cnn_ae_fan_id_02_s42,2026-11-21T06:40:05,65ccbac,cnn_ae,fan,id_02,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.492541,p95 of 138 normal cal records
+20261121-064005_calib_cnn_ae_fan_id_02_s43,2026-11-21T06:40:05,65ccbac,cnn_ae,fan,id_02,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.493589,p95 of 138 normal cal records
+20261121-064006_calib_cnn_ae_fan_id_02_s44,2026-11-21T06:40:06,65ccbac,cnn_ae,fan,id_02,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.493532,p95 of 138 normal cal records
+20261121-064006_calib_iforest_fan_id_04_s42,2026-11-21T06:40:06,65ccbac,iforest,fan,id_04,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.532489,p95 of 140 normal cal records
+20261121-064006_calib_cnn_ae_fan_id_04_s42,2026-11-21T06:40:06,65ccbac,cnn_ae,fan,id_04,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.394468,p95 of 140 normal cal records
+20261121-064006_calib_cnn_ae_fan_id_04_s43,2026-11-21T06:40:06,65ccbac,cnn_ae,fan,id_04,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.388797,p95 of 140 normal cal records
+20261121-064007_calib_cnn_ae_fan_id_04_s44,2026-11-21T06:40:07,65ccbac,cnn_ae,fan,id_04,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.392235,p95 of 140 normal cal records
+20261121-064007_calib_iforest_fan_id_06_s42,2026-11-21T06:40:07,65ccbac,iforest,fan,id_06,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.519029,p95 of 138 normal cal records
+20261121-064007_calib_cnn_ae_fan_id_06_s42,2026-11-21T06:40:07,65ccbac,cnn_ae,fan,id_06,42,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.363104,p95 of 138 normal cal records
+20261121-064007_calib_cnn_ae_fan_id_06_s43,2026-11-21T06:40:07,65ccbac,cnn_ae,fan,id_06,43,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.360378,p95 of 138 normal cal records
+20261121-064007_calib_cnn_ae_fan_id_06_s44,2026-11-21T06:40:07,65ccbac,cnn_ae,fan,id_06,44,"sr=16000,n_fft=1024,hop=512,n_mels=64,frames=64,whop=32",,,,,0.362831,p95 of 138 normal cal records

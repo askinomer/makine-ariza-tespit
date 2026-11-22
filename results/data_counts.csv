@@ -1,0 +1,5 @@
+machine_type,machine_id,train_normal,val_normal,cal_normal,test_normal,test_anomaly
+fan,id_00,638,137,136,100,407
+fan,id_02,641,137,138,100,359
+fan,id_04,653,140,140,100,348
+fan,id_06,640,137,138,100,361
