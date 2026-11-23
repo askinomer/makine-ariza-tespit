@@ -115,4 +115,4 @@ SKIP_DOWNLOAD=1 PY=.venv/bin/python bash tools/run_real.sh || fail "hat yarıda 
 say "BİTTİ. Özet:"
 grep -A 6 'eşit ağırlıklı ortalaması' results/summary.md 2>/dev/null | grep '^|'
 echo
-echo "Claude'a 'bitti' yazabilirsin. Demo için:  .venv/bin/streamlit run app/app.py"
+echo "Bitti. Demo için:  .venv/bin/streamlit run app/app.py"
