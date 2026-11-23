@@ -2,7 +2,7 @@
 
 **BMT448 Derin Öğrenmeye Giriş — Dönem Projesi**
 
-Ömer Faruk Aşkın (23181616758) · Göktuğ Ercedoğan (21181616014) · Danışman: Dr. Fuat Türk · 21 Kasım 2026
+Ömer Faruk Aşkın (23181616758) · Göktuğ Ercedoğan (21181616014) · Ders sorumlusu: Fuat Türk · 21 Kasım 2026
 
 ## Özet
 
