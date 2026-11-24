@@ -40,6 +40,7 @@ PREFIX = {"nm": "normal", "Ods": "outer", "Ids": "inner", "lc": "cage", "IOds": 
 FNAME_RE = re.compile(r"^(?P<prefix>nm|IOds|Ods|Ids|lc)(?P<rpm>\d+)r-(?P<load>\d+)%?-32Khz\.(?P<part>\d+)\.bkc$")
 FULL_SCALE_PA = 1.0      # 16-bit tam ölçek (≈ 94 dB SPL tepe); gözlenen tepeler ~0,2 Pa
 DEFAULT_CHANNEL = 1      # B&K 4966 (Pa). 0 = CRY333 (V), 2 = ikinci B&K
+HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; guilin-convert/1.0)"}  # varsayılan Python-urllib 403 alır
 API = "https://data.mendeley.com/public-api/datasets/{id}/files?folder_id=root&version=1"
 MANIFEST_FIELDS = ["path", "label", "rpm", "load", "part", "clip", "channel", "source_file", "start_utc",
                    "clip_start_s", "rms_pa", "peak_pa", "n_clipped"]
@@ -53,7 +54,7 @@ def parse_name(name: str) -> dict:
 
 
 def list_remote(label: str) -> list[dict]:
-    with urllib.request.urlopen(API.format(id=DATASETS[label]), timeout=60) as r:
+    with urllib.request.urlopen(urllib.request.Request(API.format(id=DATASETS[label]), headers=HEADERS), timeout=60) as r:
         files = json.load(r)
     return [{"name": f["filename"], "url": f["content_details"]["download_url"],
              "sha256": f["content_details"]["sha256_hash"], "size": f["size"]} for f in files]
@@ -63,7 +64,7 @@ def download(entry: dict, dest: Path, tries: int = 4) -> Path:
     for attempt in range(1, tries + 1):
         try:
             h = hashlib.sha256()
-            with urllib.request.urlopen(entry["url"], timeout=120) as r, open(dest, "wb") as f:
+            with urllib.request.urlopen(urllib.request.Request(entry["url"], headers=HEADERS), timeout=120) as r, open(dest, "wb") as f:
                 while chunk := r.read(1 << 22):
                     f.write(chunk)
                     h.update(chunk)
