@@ -99,7 +99,7 @@ def fig_folds(d, out):
         ax.tick_params(axis="y", labelsize=13)
         ax.set_xlabel("dışarıda bırakılan koşul (rpm, yük)", fontsize=13, color=SOFT)
         ax.set_title(title, fontsize=16, color=INK, loc="left")
-    axes[0].legend(loc="lower left", fontsize=12, frameon=False, labelcolor=INK)
+    axes[0].legend(loc="lower right", fontsize=12, frameon=False, labelcolor=INK)
     fig.tight_layout()
     fig.savefig(out, facecolor=PAPER)
     plt.close(fig)

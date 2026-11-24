@@ -2,7 +2,7 @@
 
 **BMT448 Derin Öğrenmeye Giriş — Dönem Projesi**
 
-Ömer Faruk Aşkın (23181616758) · Göktuğ Ercedoğan (21181616014) · Ders sorumlusu: Fuat Türk · 21 Kasım 2026
+Ömer Faruk Aşkın (23181616758) · Göktuğ Ercedoğan (21181616014) · Ders sorumlusu: Fuat Türk · 25 Kasım 2026
 
 ## Özet
 
@@ -12,7 +12,9 @@ Karar eşiği, arızalı örnek kullanılmadan normal kalibrasyon kayıtlarını
 
 Testte yanlış alarm oranı ortalamada %6,1 ile %5 hedefine yakın kalmış, ancak eşik anomalilerin yalnızca %22'sini yakalamıştır. +20 ve +10 dB beyaz gürültü AUC'yi düşürmemiş, sabit eşikte ise yanlış alarm ve yakalama oranını azaltmıştır; eşiği gürültülü normal kayıtlarla yeniden kalibre etmek bu kaymayı büyük ölçüde gidermiştir.
 
-**Anahtar kelimeler:** anomali tespiti, makine sesi, evrişimli autoencoder, Isolation Forest, DCASE 2020
+İkinci olarak aynı yöntemler, üç hız ve üç yükte kaydedilmiş çok koşullu akustik rulman veri setinde (13.500 klip; dış bilezik, iç bilezik, kafes ve bileşik arızalar) koşul-dışı bırakma protokolüyle sınanmıştır: model hiç görmediği bir çalışma koşulunda test edilmiştir. CNN AE dört arıza türünde, dokuz koşulun ve üç tohumun hepsinde ROC AUC 1,000 vermiş, Isolation Forest 0,881'de kalmıştır (fark +0,119 \[0,114; 0,124\]). Ancak eğitim koşullarından alınan eşik yeni koşula taşınmamış, sağlıklı kayıtların tamamını alarm saymıştır; yeni koşulun ilk 10 dakikasıyla ayarlanan eşik bile kayıt içi kayma nedeniyle ortalama %25 yanlış alarm vermiştir. Sesten arızayı ayırmak bu veride sorun değildir; asıl zorluk, normal sesin koşula ve zamana göre kayması karşısında eşiği güncel tutmaktır.
+
+**Anahtar kelimeler:** anomali tespiti, makine sesi, rulman arızası, evrişimli autoencoder, Isolation Forest, DCASE 2020
 
 ## 1. Giriş
 
@@ -277,19 +279,133 @@ Pratik sonuç açıktır: ortamın gürültü düzeyi değişirse eşik, yeni or
 - **Sentetik gürültü:** Beyaz gürültü gerçek fabrika gürültüsünü temsil etmez.
 - **Tohum değişkenliği:** CNN AE üç tohumla eğitildi; Isolation Forest tek tohumla çalıştırıldığı için onun tohum değişkenliği ölçülmedi.
 
-## 8. Sonuç ve Gelecek Çalışmalar
+## 8. İkinci Veri Seti: Çok Koşullu Akustik Rulman Kayıtları
 
-Yalnızca normal fan sesleriyle eğitilen küçük bir CNN autoencoder, aynı sızıntısız protokolde Isolation Forest'ı geçti: kimlik ortalamasında AUC 0,580'den 0,638'e çıktı. Ancak bu kazanç tek bir fana dayanıyor; iki fanda iki yöntem de şans düzeyinde kaldı.
+DCASE fan sonuçları, yöntemin bazı makinelerde işe yaradığını ama fabrika gürültüsü altında arızanın çoğu zaman sesten ayrılamadığını gösterdi. Sistemin asıl amacına, yani makine sesinden arıza tespitine daha doğrudan bakmak için ikinci bir veri setinde aynı iki yöntem yeniden değerlendirildi.
 
-Etiketsiz kalibrasyon, yanlış alarm oranını ortalamada hedefe yakın tuttu (%6,1), fakat anomalilerin çoğu kaçırıldı (yakalama %22). Beyaz gürültü sıralamayı bozmadı, ama sabit eşiği kaydırdı; eşik yeni ortamın normal kayıtlarıyla yeniden kalibre edildiğinde kararlar büyük ölçüde eski düzeyine döndü.
+### 8.1 Veri seti
+
+Guilin Elektronik Teknoloji Üniversitesi'nin yayımladığı çok koşullu akustik rulman veri seti kullanıldı \[20\]. Bir test düzeneğinde bilyalı rulmanlar üç hızda (800, 1000, 1200 rpm) ve üç yükte (anma torkunun %0, %15 ve %30'u) çalıştırılarak, her koşul için 50 dakika kesintisiz kayıt alınmıştır. Beş durum ayrı veri setleri olarak dağıtılır: normal rulman, dış bilezik çukurlaşması, iç bilezik çukurlaşması, kafes kırığı ve bileşik iç-dış bilezik çukurlaşması. Her kayıt 10 dakikalık beş dosyaya bölünmüştür; toplam 225 dosya ve yaklaşık 53 GB'tır. Lisans CC BY 4.0'dır.
+
+Kayıtlar üç mikrofonla, 32.768 Hz'de alınmıştır. Bu çalışmada B&K 4966 mikrofonunun kanalı (Pa cinsinden ses basıncı) kullanıldı. Dosyalar 10 saniyelik kliplere bölündü: her durumda 2.700, toplam 13.500 klip.
+
+**Dosya biçimi.** Veriler Brüel & Kjær BK Connect yazılımının `.bkc` biçimindedir ve bu biçim için açık bir belirtim veya Python okuyucusu bulunamadı. Biçim, örnek dosyaların ikili incelemesiyle çözüldü: dosya başında parça dizini ve kanal bilgilerini (birim, mikrofon hassasiyeti) içeren bir XML, ardından 4096 örneklik bloklar halinde kanallar arasında dönüşümlü yazılmış 32 bit kayan noktalı örnekler bulunur. Doğrulama için (i) blok sınırlarında sinyalin sürekliliği, (ii) dosya başına örnek sayısının tam 600 saniyeye karşılık gelmesi ve (iii) mikrofonlar arası eş-uyumun (0,3–0,47; kanallar kaydırıldığında 0,07) tutarlı olması kontrol edildi (`src/bkc.py`). WAV'a çevirmede kayıt başına genlik normalizasyonu yapılmadı; tüm dosyalar aynı sabitle ölçeklendi (16 bit tam ölçek = 1 Pa). 13.500 klipten yalnızca birinde 3 örnek kırpıldı.
+
+### 8.2 Kayıt düzeni ve oturum sorunu
+
+Bu veri setinde normal ve arızalı rulmanların kayıtları farklı oturumlarda alınmıştır (Tablo 8.1). Bir model arızayı değil, oturumlar arasındaki farkı (mikrofon yerleşimi, ortam) öğrenirse AUC yanıltıcı biçimde yüksek çıkar. Bu nedenle protokol bu riski sınayacak şekilde kuruldu.
+
+| Kayıt günü | Normal | Dış bilezik | İç bilezik | Kafes | Bileşik |
+| --- | --- | --- | --- | --- | --- |
+| 30–31 Ekim 2025 | – | – | 40 | – | – |
+| 1 Kasım | 16 | – | – | – | – |
+| 2 Kasım | 29 | 45 | – | – | – |
+| 3–4 Kasım | – | – | 5 | 45 | – |
+| 6–7 Kasım | – | – | – | – | 45 |
+
+*Tablo 8.1. Kayıt günlerine göre kaynak dosya sayıları (10 dakikalık dosyalar).*
+
+Ön analizde basit bir model (log mel ortalama ve standart sapma vektörü üzerinde Mahalanobis uzaklığı) önce **tek bir koşulun** normal kayıtlarıyla öğrenildi. Bu model arızaları kusursuz ayırdı (AUC 1,000), ama aynı zamanda **başka koşulların sağlıklı kayıtlarını da** kusursuz biçimde anormal saydı ve arızalı kayıtlara bu sağlıklı kayıtlarla aynı düzeyde skor verdi. Yani yalnızca tek koşulla kurulan bir değerlendirme, arızayı koşul ve oturum farkından ayıramıyordu.
+
+### 8.3 Protokol: koşul-dışı bırakma
+
+Bu yüzden ana protokol olarak **koşul-dışı bırakma** (leave-one-condition-out) seçildi. Dokuz koşulun her biri sırayla test koşulu yapılır; model yalnızca diğer sekiz koşulun **normal** kayıtlarıyla eğitilir ve test koşulu hiç görülmez:
+
+- **Eğitim:** sekiz koşulun 1–3. dosyaları (1.440 klip).
+- **Doğrulama:** 4. dosyalar (480 klip), yalnızca erken durdurma için.
+- **Kalibrasyon:** 5. dosyalar (480 klip); eşik = skorların 95. persentili.
+- **Test:** dışarıda bırakılan koşulun tüm normal klipleri (300) ve o koşulun dört arıza türü (her biri 300 klip).
+
+Dosyalar zaman bloklarıdır; komşu klipler aynı bölüme düştüğü için zamansal sızıntı yoktur. Arızalı kayıt eğitimde, model seçiminde veya eşikte hiç kullanılmaz. Bu kurulumda test edilen normal kayıt da modelin hiç görmediği bir oturumdan gelir; yani yüksek AUC, arıza skorlarının "yeni bir oturumun sağlıklı sesi"nden de belirgin biçimde yüksek olmasını gerektirir.
+
+Bu protokolle yapılan ön analizde basit Mahalanobis modeli dört arıza türünde ve dokuz koşulun hepsinde AUC 1,000 verdi. Kayıt zincirinden kaynaklanabilecek bir yapaylığı elemek için aynı test frekans bantlarına ayrılarak tekrarlandı: 0–1 kHz'de kafes kırığı 0,83, diğer arızalar 1,00; 1–2, 2–5 ve 5–16 kHz bantlarında tüm arızalar 0,97–1,00. Ayrım tek bir banda bağlı değildir. En temiz karşılaştırma dış bilezik arızasıdır: tüm dış bilezik kayıtları normal kayıtların çoğuyla aynı gün (2 Kasım) alınmıştır (Bölüm 8.5).
+
+### 8.4 Yöntemler ve ayarlar
+
+İki yöntem DCASE deneyindekiyle aynıdır; yalnızca ön işleme 32.768 Hz'e uyarlandı: 2048 örneklik (62,5 ms) Hann penceresi, 1024 örnek kayma, 0–16.384 Hz arasında 64 mel bandı. 10 saniyelik klip 64 × 321 boyutlu bir log mel matrisi verir. CNN AE, 64 × 64 pencerelerle (yaklaşık 2 saniye, örtüşmesiz) eğitildi: Adam, öğrenme oranı 0,001, yığın 64, en fazla 80 epoch, sabır 7 (ilk denemede 30 epoch sınırında doğrulama kaybı hâlâ düştüğü için, test sonuçlarına bakılmadan yükseltildi). Kayıt skoru pencere hatalarının ortalamasıdır. CNN AE üç tohumla (42, 43, 44), Isolation Forest tek tohumla (42) çalıştırıldı. Gürültü deneyi DCASE'tekiyle aynıdır: dosya başına sabit beyaz gürültü (+20 ve +10 dB SNR), sabit eşik ve gürültülü kalibrasyonla yeniden ayarlanan eşik.
+
+Deney `scripts/guilin_experiment.py` ile Google Colab'da (NVIDIA T4) çalıştırıldı.
+
+Toplam süre 35 dakikadır (27 CNN AE eğitimi model başına yaklaşık 70 saniye). 27 eğitimin 25'inde en iyi epoch 74–80 arasındadır; doğrulama kaybı 80. epoch'a kadar yavaşça düşmeye devam etmiştir (bkz. Sınırlılıklar).
+
+### 8.5 Sonuçlar
+
+**Sıralama başarısı.** Görülmemiş koşulda CNN AE, dört arıza türünde, dokuz katın ve üç tohumun hepsinde AUC 1,000 vermiştir (Tablo 8.2, Şekil 8.1). Isolation Forest'ın ortalaması 0,881'dir ve koşula göre çok değişir: 1000–1200 rpm'de 0,90–1,00, 800 rpm'de ise 0,53–0,89 (Şekil 8.2). Ortalama AUC farkı **+0,119 \[0,114; 0,124\]**'tür (eşleştirilmiş bootstrap, 300 tekrar).
+
+| Arıza | Isolation Forest AUC (en düşük kat) | CNN AE AUC (en düşük kat) | IF pAUC | CNN AE pAUC |
+| --- | --- | --- | --- | --- |
+| Dış bilezik | 0,875 (0,235) | 1,000 (1,000) | 0,840 | 1,000 |
+| İç bilezik | 0,868 (0,380) | 1,000 (1,000) | 0,850 | 1,000 |
+| Kafes kırığı | 0,838 (0,388) | 1,000 (1,000) | 0,736 | 1,000 |
+| Bileşik iç-dış | 0,945 (0,553) | 1,000 (1,000) | 0,918 | 1,000 |
+| **Tüm arızalar** | **0,881** (0,528) | **1,000** (1,000) | 0,836 | 1,000 |
+
+*Tablo 8.2. Koşul-dışı bırakma, 9 kat ortalaması; CNN AE üç tohumun ortalamasıdır (tohumlar arası sd 0,000).*
+
+AUC 1,000, en düşük arıza skorunun en yüksek normal skordan büyük olduğu anlamına gelir. Bu boşluğun büyüklüğü, görülmemiş koşulda en düşük arıza skorunun en yüksek normal skora oranıyla ölçüldü: CNN AE'de bu oran arıza türüne göre medyan 1,25–2,55, en kötü katta 1,07–1,84'tür; yani her katta normal ve arızalı klipler arasında açık bir boşluk vardır. Isolation Forest'ta oran 0,90–1,02 arasındadır; sınıflar örtüşür.
+
+**Aynı gün alt kümesi.** 2 Kasım'da kaydedilmiş normal klipler ile aynı gün kaydedilmiş dış bilezik klipleri karşılaştırıldığında (6 kat), CNN AE ve Isolation Forest AUC'si 1,000'dir. Oturumlar arası farkın en az olduğu bu karşılaştırmada da ayrım korunmuştur.
+
+![Şekil 8.1](../results_guilin/figures/guilin_auc.png)
+
+*Şekil 8.1. Arıza türü başına AUC: nokta 9 kat ortalaması, çizgi en düşük ve en yüksek kat.*
+
+![Şekil 8.2](../results_guilin/figures/guilin_kosul.png)
+
+*Şekil 8.2. Dışarıda bırakılan koşula göre AUC (sol) ve eğitim koşullarından alınan eşikle görülmemiş koşulun normal kayıtlarında yanlış alarm oranı (sağ).*
+
+**Eşik.** Sıralama kusursuz olsa da eğitim koşullarının normal kayıtlarından alınan eşik yeni koşula taşınmamıştır: CNN AE görülmemiş koşulun sağlıklı kliplerinin tamamını alarm olarak işaretlemiştir (yanlış alarm %100; Isolation Forest'ta %86,5). Yani skor ölçeği koşula göre kayar; arızalar yine daha yüksek skor aldığı için AUC etkilenmez.
+
+Bunun pratik çözümü, yeni koşulda kısa bir normal kayıtla eşiği yeniden ayarlamaktır. Bu kural sonuçlara bakılmadan sabitlendi: eşik, yeni koşulun ilk 10 dakikalık normal kaydının (60 klip) 95. persentilidir; test, kalan 40 dakikalık normal kayıt ve tüm arızalardır (Tablo 8.3). CNN AE'de yakalama %100'e çıkar, ama yanlış alarm ortalamada %24,6 ± 3,4 kalır ve en kötü katta %93'e ulaşır. Sebep, kayıt içindeki kaymadır: aynı koşulda sağlıklı rulmanın skoru 50 dakika boyunca artar (ön analizde basit Mahalanobis modeliyle, son 10 dakikanın medyan skoru 3. dosyaya göre koşula bağlı olarak 1,7–23 kat yüksekti). İlk 10 dakikadan alınan eşik bu kaymayı karşılamaz.
+
+| Yöntem | Ses | Yakalama | Yanlış alarm | En kötü kat yanlış alarm | F1 |
+| --- | --- | --- | --- | --- | --- |
+| Isolation Forest | temiz | %68,2 | %16,2 | %60,8 | 0,714 |
+| CNN AE | temiz | %100,0 | %24,6 ± 3,4 | %92,6 | 0,977 |
+| CNN AE | +20 dB | %100,0 | %18,2 ± 3,8 | %93,1 | 0,983 |
+| CNN AE | +10 dB | %99,3 ± 1,2 | %12,8 ± 1,4 | %92,1 | 0,984 |
+
+*Tablo 8.3. Yeni koşulun ilk 10 dakikalık normal kaydıyla ayarlanan eşik (tüm arızalar).*
+
+**Gürültü.** Beyaz gürültü CNN AE'nin sıralamasını bozmadı (+20 dB'de 1,000, +10 dB'de 0,9996). Isolation Forest'ın AUC'si 0,870–0,890 arasında kaldı. Eşik tarafında DCASE'tekine benzer bir kayma görüldü: gürültülü normal kayıtlarla yeniden kalibre edilen eşik, +10 dB'de CNN AE'nin yanlış alarmını %100'den %19'a indirdi, yakalamayı %90'a düşürdü (Şekil 8.3).
+
+![Şekil 8.3](../results_guilin/figures/guilin_gurultu.png)
+
+*Şekil 8.3. Gürültü altında AUC, yakalama ve yanlış alarm; düz çizgi özgün eşik, kesikli çizgi gürültülü normal kayıtlarla yeniden ayarlanan eşik.*
+
+### 8.6 Tartışma
+
+**Neden fan verisinden bu kadar farklı?** Rulman arızaları dönmeye bağlı, tekrarlayan darbeler üretir; bu darbeler hem zarf spektrumunda belirgin tepeler hem de log mel spektrogramda geniş bantta yapı değişikliği olarak görülür (Bölüm 8.3'teki bant analizi). Kayıtlar bir test düzeneğinde, sessiz görünen bir ortamda alınmıştır (normal kayıtlar yaklaşık 59 dB SPL; veri seti açıklaması arka plan gürültüsünden söz etmez); DCASE fan kayıtlarındaki gibi arızayı maskeleyen bir fabrika gürültüsü yoktur. CNN AE, 2 saniyelik zaman-frekans pencerelerindeki bu yerel yapıyı yakalarken, yalnızca bant ortalaması ve standart sapmasına bakan Isolation Forest özellikle 800 rpm'de koşul farkıyla arızayı ayıramamıştır.
+
+**Sonuç ne kadar güvenilir?** Üç bulgu sonucun yalnızca oturum farkından kaynaklanmadığını destekler: (i) model hiç görmediği bir koşulun ve oturumun sağlıklı sesini arızadan kusursuz ayırır; (ii) normal ve dış bilezik kayıtlarının aynı gün alındığı alt kümede de ayrım korunur; (iii) ayrım tek bir frekans bandına bağlı değildir. Yine de normal ve arızalı rulmanlar aynı oturumda, aynı mikrofon yerleşimiyle kaydedilmemiştir ve veri setinde tek bir test düzeneği vardır. AUC 1,000, gerçek bir fabrikada kusursuz tespit anlamına gelmez.
+
+**Asıl zorluk eşik.** Sıralama kusursuzken kararların bozulması, sistemin tasarımı için önemli bir sonuçtur: arızayı sesten ayırmak bu veride sorun değildir, sorun "normal"in koşula ve zamana göre kaymasıdır. Bu yüzden eşik her çalışma koşulu için o koşulun normal kayıtlarıyla belirlenmeli ve zaman içinde güncellenmelidir. Ayrım payının en kötü katta bile 1,07'nin üstünde olması, yeterince temsil edici bir normal kayıtla iyi bir eşiğin var olduğunu gösterir; bunun sahada ne kadar normal kayıtla elde edilebileceği bu çalışmada ölçülmedi.
+
+**Sınırlılıklar.**
+
+- Normal ve arızalı rulmanlar farklı oturumlarda kaydedilmiştir; aynı gün alt kümesi bu etkiyi yalnızca dış bilezik için kısmen sınar.
+- Tek test düzeneği ve tek rulman tipi; kayıtlarda fabrika gürültüsü yoktur.
+- Her arıza türü için tek bir arızalı rulman kaydedilmiş olabilir; arıza boyutu ve şiddeti veri setinde belirtilmemiştir.
+- CNN AE eğitimlerinin çoğunda doğrulama kaybı 80 epoch sınırında hâlâ yavaşça düşüyordu; daha uzun eğitim sıralamayı değiştirmez (zaten 1,000), ama skor ölçeğini etkileyebilir.
+- Hedef koşul kalibrasyonu analizi, ana deneyden sonra yapılmış bir ek analizdir; kuralı (ilk 10 dakika, 95. persentil) sonuçlara bakılmadan sabitlenmiştir.
+
+## 9. Sonuç ve Gelecek Çalışmalar
+
+Yalnızca normal seslerle eğitilen küçük bir CNN autoencoder, iki veri setinde de aynı sızıntısız protokolde Isolation Forest'ı geçti.
+
+**Fan (DCASE 2020).** Kimlik ortalamasında AUC 0,580'den 0,638'e çıktı; ancak kazanç tek bir fana dayanıyor ve iki fanda iki yöntem de şans düzeyinde kaldı. Etiketsiz kalibrasyon yanlış alarmı hedefe yakın tuttu (%6,1), fakat anomalilerin çoğu kaçırıldı (yakalama %22). Fabrika gürültüsü altındaki fan arızaları, bu boyuttaki bir modelle sesten güvenilir biçimde ayrılamadı.
+
+**Rulman (çok koşullu akustik veri seti).** Hiç görülmemiş hız/yük koşullarında CNN AE dört arıza türünü sağlıklı kayıtlardan kusursuz sıraladı (AUC 1,000, 9 kat × 3 tohum); Isolation Forest 0,881'de kaldı ve düşük hızda şans düzeyine yaklaştı. Ayrım, normal ve arızalı kayıtların aynı gün alındığı alt kümede ve her frekans bandında korundu. Buna karşın eşik koşullar arasında ve aynı kayıt içinde zamanla kaydı: eğitim koşullarından alınan eşik yeni koşulda tüm sağlıklı kayıtları alarm saydı; yeni koşulun ilk 10 dakikasıyla ayarlanan eşik bile ortalama %25 yanlış alarm verdi.
+
+Projenin yanıtı şudur: makine sesinden arıza tespiti, arızanın sese belirgin yansıdığı ve ortamın görece sessiz olduğu durumlarda (rulman verisi) derin bir modelle çok yüksek doğrulukla yapılabilir; fabrika gürültüsü altında (fan verisi) ise sınırlı kalır. Her iki durumda da sistemin zayıf noktası modelin sıralaması değil, eşiğin koşul, gürültü ve zamanla değişen "normal"e göre güncel tutulmasıdır.
 
 Gelecek çalışmalar için öneriler:
 
-- Tüm eğitim kayıtlarıyla ve makine türü başına tek modelle eğitim; DCASE protokolüyle birebir karşılaştırma.
-- Kimlik sınıflandırmasına dayalı öz-denetimli yaklaşımın \[9\] ve IDNN'nin \[8\] aynı protokolde denenmesi.
-- Pompa, vana, kızaklı ray ve ToyADMOS makineleri gibi diğer makine türlerine genişletme.
+- Eşiğin çalışma sırasında sürekli güncellenmesi (kayan pencereyle normal skor dağılımının izlenmesi) ve bunun için ne kadar normal kayıt gerektiğinin ölçülmesi.
+- Normal ve arızalı durumların aynı oturumda kaydedildiği, farklı rulmanlar ve arıza şiddetleri içeren verilerle doğrulama.
+- Hız ve yükü girdi olarak alan koşullu modeller; koşul değiştiğinde yeniden kalibrasyon ihtiyacını azaltabilir.
+- Fan verisinde tüm eğitim kayıtlarıyla ve makine türü başına tek modelle eğitim; kimlik sınıflandırmasına dayalı yaklaşımın \[9\] ve IDNN'nin \[8\] denenmesi.
 - Gerçek fabrika gürültüsü kayıtlarıyla ve farklı SNR düzeyleriyle dayanıklılık deneyi.
-- Hatalı kararların dinlenerek incelenmesi ve eşiğin daha fazla normal kayıtla kalibre edilmesi.
 
 ## Kaynakça
 
@@ -312,6 +428,7 @@ Gelecek çalışmalar için öneriler:
 17. F. Pedregosa vd., "Scikit-learn: Machine learning in Python," *Journal of Machine Learning Research*, c. 12, ss. 2825–2830, 2011.
 18. Y. Koizumi vd., "DCASE 2020 Challenge Task 2 Development Dataset," Zenodo, sürüm 1.0, 2020, CC BY-NC-SA 4.0 lisansı. [doi:10.5281/zenodo.3678171](https://doi.org/10.5281/zenodo.3678171)
 19. DCASE 2020 Görev 2 resmî baseline kodu, GitHub. [github.com/y-kawagu/dcase2020\_task2\_baseline](https://github.com/y-kawagu/dcase2020_task2_baseline)
+20. C. Xu, X. Wang, J. Huang, Y. Lu, H. Su ve J. Lu, "A multi-condition acoustic dataset of ball bearings for fault diagnosis" (normal rulman, dış bilezik, iç bilezik, kafes kırığı ve bileşik iç-dış bilezik alt kümeleri), Mendeley Data, sürüm 1, 2026, CC BY 4.0 lisansı. [doi:10.17632/j99rf8rsrz.1](https://doi.org/10.17632/j99rf8rsrz.1), [10.17632/g2kzkwnkgw.1](https://doi.org/10.17632/g2kzkwnkgw.1), [10.17632/w9d6g35kcy.1](https://doi.org/10.17632/w9d6g35kcy.1), [10.17632/jvv7p4wfgv.1](https://doi.org/10.17632/jvv7p4wfgv.1), [10.17632/bbvhrygxjz.1](https://doi.org/10.17632/bbvhrygxjz.1)
 
 ## Ek: Sonuçları Yeniden Üretme
 
@@ -321,6 +438,7 @@ Tüm deneyler proje klasöründeki komutlarla baştan üretilebilir; bölünme d
 2. Veri: `python scripts/download_data.py` (DCASE 2020 Görev 2 geliştirme seti, `dev_data_fan.zip`, 1,4 GB) \[18\].
 3. Hat: `bash tools/run_real.sh` sırayla veri hazırlama, özellik çıkarma, Isolation Forest, üç tohumla CNN AE, kalibrasyon, son test ve gürültü deneyini çalıştırır.
 4. Demo: `streamlit run app/app.py`; WAV yükleme veya test setinden örnek seçme ile skor, eşik, spektrogram ve pencere skorları gösterilir.
-5. Testler: `python -m pytest -q` bölünme, sızıntı, özellik, model, ölçüt, gürültü ve demo için 23 otomatik testi çalıştırır.
+5. Testler: `python -m pytest -q` bölünme, sızıntı, özellik, model, ölçüt, gürültü, demo ve rulman deney hattı için 25 otomatik testi çalıştırır.
+6. Rulman veri seti (Bölüm 8): `notebooks/guilin_colab.ipynb` Google Colab'da (T4 GPU) veriyi indirir ve WAV'a çevirir (`tools/guilin_convert.py`), deneyi çalıştırır (`scripts/guilin_experiment.py`), grafikleri ve sonuç paketini üretir; toplam yaklaşık 1 saat. Rulman demosu: `APP_CONFIG=configs/guilin.yaml streamlit run app/app.py`.
 
-Sonuç tabloları `results/summary.md` ve `results/noise_summary.md`, şekiller `results/figures/`, modeller ve eşikler `checkpoints/` altında oluşur.
+Sonuç tabloları `results/summary.md` ve `results/noise_summary.md`, şekiller `results/figures/`, modeller ve eşikler `checkpoints/` altında oluşur. Rulman sonuçları `results_guilin/` (özet: `summary.md`, `target_calibration.md`), demo modelleri `checkpoints_guilin/` altındadır.

@@ -6,6 +6,7 @@ data/synthetic/
 data/synthetic_*.csv
 checkpoints/
 checkpoints_synthetic/
+checkpoints_guilin/
 results_synthetic/
 *.zip
 *.pt

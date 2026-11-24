@@ -1,7 +1,8 @@
 # Sesten makine arıza tespiti — BMT448 dönem projesi
 
-Fanın **sağlıklı** çalışırken çıkardığı sesi öğrenen ve alışılmadık sesleri işaretleyen sistem.
-Veri: DCASE 2020 Task 2 development, **fan** alt kümesi. İki yöntem aynı bölünmede karşılaştırılır:
+Makinenin **sağlıklı** çalışırken çıkardığı sesi öğrenen ve alışılmadık sesleri işaretleyen sistem.
+İki veri seti: DCASE 2020 Task 2 development **fan** alt kümesi ve çok koşullu akustik **rulman** veri seti (Guilin).
+İki yöntem aynı bölünmede karşılaştırılır:
 
 | Yöntem | Ne yapar |
 |---|---|
@@ -13,7 +14,7 @@ Araştırma sorusu: *CNN autoencoder referans yöntemi geçiyor mu ve ek gürül
 > **Kapsam sınırı.** Sistem ses anomalisini saptar; arızanın nedenini (ör. rulman) veya kalan ömrü tahmin etmez.
 > Anomali skoru kalibre edilmiş bir arıza olasılığı değildir.
 
-## Sonuçlar (gerçek veri, son test 21.11.2026, git 65ccbac)
+## Sonuçlar — fan (DCASE 2020, son test 21.11.2026, git 65ccbac)
 
 Son test bir kez çalıştırıldı (`results/test_access_log.csv`). CNN AE değerleri üç tohumun (42, 43, 44) ortalamasıdır;
 köşeli parantez = %95 bootstrap güven aralığı. Ayrıntılar: `results/summary.md`, `results/noise_summary.md`, `docs/rapor.md`.
@@ -33,6 +34,56 @@ köşeli parantez = %95 bootstrap güven aralığı. Ayrıntılar: `results/summ
 - DCASE baseline makine türü başına tek model ve tüm eğitim verisiyle eğitilir; karşılaştırma yaklaşıktır (bkz. rapor 7.2).
 
 Sunum grafikleri: `results/figures/sunum_auc.png`, `sunum_gurultu.png`, `sunum_hata.png` (`python tools/make_figures.py`).
+
+---
+
+## İkinci veri seti: çok koşullu akustik rulman kayıtları (Guilin)
+
+Rulmanların sağlıklı ve arızalı (dış bilezik, iç bilezik, kafes kırığı, bileşik iç-dış) seslerini 3 hız × 3 yük koşulunda
+kaydeden veri seti (Mendeley Data, 2026, CC BY 4.0). 225 adet 10 dakikalık `.bkc` dosyası (~53 GB) → 13.500 adet 10 sn'lik klip.
+
+### Sonuçlar (koşul-dışı bırakma, 9 kat; CNN AE 3 tohum ortalaması; Colab T4, 25.11.2026)
+
+| Arıza | Isolation Forest AUC (en düşük kat) | CNN AE AUC (en düşük kat) |
+|---|---|---|
+| Dış bilezik | 0,875 (0,235) | **1,000** (1,000) |
+| İç bilezik | 0,868 (0,380) | **1,000** (1,000) |
+| Kafes kırığı | 0,838 (0,388) | **1,000** (1,000) |
+| Bileşik iç-dış | 0,945 (0,553) | **1,000** (1,000) |
+| **Tüm arızalar** | **0,881** | **1,000** |
+
+- CNN AE − IF farkı: **+0,119 [0,114; 0,124]** (eşleştirilmiş bootstrap). Model test koşulunu hiç görmedi; 9 katın ve 3 tohumun
+  hepsinde AUC 1,000. En düşük arıza skoru, görülmemiş koşulun en yüksek normal skorunun en kötü katta bile 1,07–1,84 katı.
+- Aynı gün kaydedilmiş normal ve dış bilezik kayıtlarında (oturum farkı en az) da AUC 1,000.
+- **Eşik zayıf nokta:** eğitim koşullarından alınan eşik yeni koşulun sağlıklı kayıtlarının tamamını alarm sayıyor (yanlış alarm %100).
+  Yeni koşulun ilk 10 dakikasıyla ayarlanınca yakalama %100, yanlış alarm %24,6 ± 3,4 (kayıt içi kayma nedeniyle; en kötü kat %93).
+- +10/+20 dB beyaz gürültü CNN AE'nin sıralamasını bozmadı (AUC ≥ 0,9996).
+- Ayrıntılar: `results_guilin/summary.md`, `results_guilin/target_calibration.md`, `docs/rapor.md` Bölüm 8;
+  grafikler `results_guilin/figures/guilin_auc.png`, `guilin_kosul.png`, `guilin_gurultu.png`.
+
+> Normal ve arızalı rulmanlar farklı oturumlarda kaydedildi; tek test düzeneği, sessiz ortam. AUC 1,000 sahada kusursuz tespit anlamına gelmez.
+
+**Protokol — koşul-dışı bırakma (9 kat).** Her katta bir hız/yük koşulu tamamen dışarıda bırakılır; model yalnızca diğer
+8 koşulun normal kayıtlarıyla eğitilir (dosya 1–3 eğitim, 4 doğrulama, 5 kalibrasyon). Test: dışarıda bırakılan koşulun
+normal klipleri (hiç görülmemiş oturum) ve o koşulun 4 arıza türü. Bu düzen, normal ve arızalı kayıtların farklı oturumlarda
+alınmış olmasının yarattığı riski sınar: tek koşulla kurulan bir model başka koşulların *sağlıklı* sesini de "arıza" sayıyordu
+(bkz. `docs/rapor.md` Bölüm 9.2).
+
+**Çalıştırma (Google Colab, T4 GPU önerilir; CPU'da çok yavaş):**
+
+```bash
+git clone -b askinomer/inconnu https://github.com/askinomer/makine-ariza-tespit.git && cd makine-ariza-tespit
+python tools/guilin_convert.py --out /content/guilin_wav --workers 6      # indir → .bkc oku → WAV klipleri (~12 dk)
+python scripts/guilin_experiment.py --wav /content/guilin_wav --out /content/guilin_results \
+    --ckpt /content/guilin_ckpt --seeds 42 43 44                          # deney + demo modelleri
+python tools/make_guilin_figures.py --results /content/guilin_results    # grafikler
+```
+
+Yardımcı araçlar: `src/bkc.py` (BK Connect `.bkc` okuyucu; biçim ikili incelemeyle çözüldü), `tools/bkc_to_wav.py`,
+`tools/guilin_compare.py` (normal/arıza spektrum karşılaştırması), `tools/guilin_session_check.py`, `tools/guilin_loco.py`,
+`tools/guilin_bands.py` (oturum, koşul ve frekans bandı kontrolleri), `notebooks/guilin_colab.ipynb`.
+
+**Demo:** `APP_CONFIG=configs/guilin.yaml streamlit run app/app.py` (modeller `checkpoints_guilin/` altında olmalı).
 
 ---
 
@@ -132,10 +183,12 @@ tools/          mac_run.sh ve run_real.sh (tek komutla gerçek çalıştırma), 
                 report_stats.py (tohum ortalamalı AUC ve eşleştirilmiş bootstrap farkı), make_figures.py (sunum grafikleri),
                 make_synthetic_dataset.py (DCASE düzeninde küçük sentetik veri)
 notebooks/      colab_run.ipynb — GPU'suz ekip için Colab'da çalıştırma
-docs/           rapor.md — raporun Markdown kopyası (gerçek sonuçlarla)
+docs/           rapor.md — raporun Markdown kopyası (gerçek sonuçlarla; Bölüm 8 rulman veri seti)
 data/           raw/ (Git'e girmez), processed/ (Git'e girmez), manifest.csv, split.csv (Git'te)
 checkpoints/    model ağırlıkları, scaler, eşik (Git'e girmez — teslimde ayrı paylaşın)
-results/        metrikler, grafikler, deney defteri
+results/        metrikler, grafikler, deney defteri (fan)
+results_guilin/ rulman veri seti sonuçları ve grafikleri
+checkpoints_guilin/  rulman demo modelleri (Colab'daki son eğitimden; Git'e girmez)
 ```
 
 ---
