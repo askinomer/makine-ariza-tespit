@@ -47,7 +47,7 @@ from src.utils import save_json, set_seed
 
 FCFG = dict(sr=32768, n_fft=2048, win_length=2048, hop_length=1024, window="hann", n_mels=64, power=2.0,
             fmin=0, fmax=16384, top_db=80.0, ref=1.0, frames=64, window_hop=64, std_eps=1e-6)
-ACFG = dict(bottleneck=128, lr=1e-3, batch_size=64, max_epochs=30, patience=5)
+ACFG = dict(bottleneck=128, lr=1e-3, batch_size=64, max_epochs=80, patience=7)
 FAULTS = ["outer", "inner", "cage", "compound"]
 FAULT_TR = {"outer": "dış bilezik", "inner": "iç bilezik", "cage": "kafes kırığı", "compound": "bileşik iç-dış",
             "tümü": "tüm arızalar"}
@@ -373,11 +373,14 @@ def main():
     ap.add_argument("--ckpt", required=True)
     ap.add_argument("--seeds", type=int, nargs="*", default=[42, 43, 44])
     ap.add_argument("--max-epochs", type=int, default=None)
+    ap.add_argument("--patience", type=int, default=None)
     ap.add_argument("--n-boot", type=int, default=300)
     ap.add_argument("--skip-final", action="store_true")
     a = ap.parse_args()
     if a.max_epochs:
         ACFG["max_epochs"] = a.max_epochs
+    if a.patience:
+        ACFG["patience"] = a.patience
     wav, out, ckpt = Path(a.wav), Path(a.out), Path(a.ckpt)
     out.mkdir(parents=True, exist_ok=True)
     logf = open(out / "log.txt", "a", encoding="utf-8")
