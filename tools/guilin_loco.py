@@ -24,7 +24,8 @@ COLS = [f"f{i}" for i in range(128)]
 
 def level_free(X):
     X = X.copy()
-    X[:, :64] -= X[:, :64].mean(axis=1, keepdims=True)
+    h = X.shape[1] // 2
+    X[:, :h] -= X[:, :h].mean(axis=1, keepdims=True)
     return X
 
 
@@ -45,8 +46,16 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--features", required=True)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--fmin", type=float, default=0, help="yalnızca bu bandın üstündeki mel bantları (Hz)")
+    ap.add_argument("--fmax", type=float, default=16384, help="yalnızca bu bandın altındaki mel bantları (Hz)")
     a = ap.parse_args()
     df = pd.read_parquet(a.features)
+    import librosa
+    hz = librosa.mel_frequencies(n_mels=64, fmin=0, fmax=16384)
+    keep = np.where((hz >= a.fmin) & (hz < a.fmax))[0]
+    global COLS
+    COLS = [f"f{i}" for i in keep] + [f"f{64 + i}" for i in keep]
+    print(f"Bant {a.fmin:g}-{a.fmax:g} Hz: {len(keep)} mel bandı, {len(COLS)} özellik")
     faults = sorted(l for l in df.label.unique() if l != "normal")
     conds = sorted(df[["rpm", "load"]].drop_duplicates().itertuples(index=False))
     rows = []
