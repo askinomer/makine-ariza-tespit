@@ -63,6 +63,22 @@ def main():
           "|---|" + "---|" * len(FAULTS)]
     for m in ("iforest", "cnn_ae"):
         L.append(f"| {METHOD_TR[m]} | " + " | ".join(fmt(agg.loc[(m, 'temiz', f)][('recall', 'mean')]) for f in FAULTS) + " |")
+    # Ayrım payı: yeni koşulda en düşük arıza skoru / en yüksek normal skor (>1 ise aradaki her eşik kusursuz ayırır)
+    T = S[S.noise == "temiz"]
+    mg = []
+    for (m, seed, fold), t in T.groupby(["method", "seed", "fold"]):
+        mx_n = t[t.label == "normal"].score.max()
+        for fl in FAULTS:
+            mg.append(dict(method=m, seed=seed, fold=fold, fault=fl, margin=t[t.label == fl].score.min() / mx_n))
+    G = pd.DataFrame(mg)
+    G.to_csv(res / "separation_margin.csv", index=False)
+    g = G.groupby(["method", "fault"]).margin.agg(["median", "min"])
+    L += ["", "## Ayrım payı (temiz): en düşük arıza skoru / en yüksek normal skor, dışarıda bırakılan koşulda", "",
+          "1'den büyükse normal ve arızalı klipler arasında boşluk vardır; bu aralıktaki her eşik iki sınıfı kusursuz ayırır.", "",
+          "| Yöntem | " + " | ".join(FAULT_TR[f] for f in FAULTS) + " |", "|---|" + "---|" * len(FAULTS)]
+    for m in ("iforest", "cnn_ae"):
+        L.append(f"| {METHOD_TR[m]} (medyan / en düşük) | "
+                 + " | ".join(f"{fmt(g.loc[(m, f)]['median'], 2)} / {fmt(g.loc[(m, f)]['min'], 2)}" for f in FAULTS) + " |")
     L.append("")
     (res / "target_calibration.md").write_text("\n".join(L), encoding="utf-8")
     print("\n".join(L))
