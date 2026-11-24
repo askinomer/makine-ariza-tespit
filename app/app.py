@@ -92,7 +92,7 @@ def plot_window_scores(centers, errs, threshold, top_idx):
 def main():
     cfg = get_cfg(CONFIG_PATH)
     st.title("🔊 Sesten makine arıza tespiti")
-    st.caption("DCASE 2020 Task 2 · fan · yalnızca normal seslerle eğitilmiş modeller")
+    st.caption(cfg.get("app", {}).get("caption", "DCASE 2020 Task 2 · fan") + " · yalnızca normal seslerle eğitilmiş modeller")
 
     dets = available_detectors(cfg)
     if not dets:
@@ -210,8 +210,12 @@ def main():
         st.subheader("Zaman içinde pencere skorları")
         centers = frames_to_seconds(starts + det.fcfg["frames"] / 2, det.fcfg)
         st.pyplot(plot_window_scores(centers, errs, thr, top_idx), clear_figure=True)
+        win_s = frames_to_seconds(det.fcfg["frames"], det.fcfg)
+        overlap = 1 - det.fcfg["window_hop"] / det.fcfg["frames"]
         st.caption("İşaretli bölgeler incelemek için önerilir; arızanın kesin yerini göstermez. "
-                   "Pencereler ~2 s uzunluğunda ve %50 örtüşmelidir. Kayıt skoru pencere hatalarının ortalamasıdır.")
+                   f"Pencereler ~{win_s:.1f} s uzunluğunda" + (f" ve %{overlap * 100:.0f} örtüşmelidir. " if overlap > 0 else
+                                                              ", örtüşmesizdir. ")
+                   + "Kayıt skoru pencere hatalarının ortalamasıdır.")
         st.dataframe(pd.DataFrame({
             "sıra": [1, 2, 3],
             "başlangıç (s)": [round(h[0], 2) for h in highlight],

@@ -1,0 +1,20 @@
+# Guilin çok koşullu akustik rulman veri seti — demo yapılandırması.
+# Deney ayarları scripts/guilin_experiment.py içinde sabittir (FCFG, ACFG); bu dosya yalnızca demo içindir:
+#   APP_CONFIG=configs/guilin.yaml streamlit run app/app.py
+# Modeller (checkpoints_guilin/) Colab'daki son eğitimden gelir; bkz. README "Guilin" bölümü.
+
+seed: 42
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  manifest: data/manifest.csv
+  split: data/guilin_examples.csv    # demo örnek listesi (app/examples/guilin/)
+  checkpoints: checkpoints_guilin
+  results: results_guilin
+
+data:
+  silence_rms: 1.0e-5
+
+app:
+  caption: "Guilin çok koşullu akustik rulman veri seti · 800–1200 rpm, %0–30 yük"
