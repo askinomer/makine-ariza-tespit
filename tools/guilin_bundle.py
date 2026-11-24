@@ -16,7 +16,8 @@ from pathlib import Path
 import pandas as pd
 
 RESULT_FILES = ["summary.md", "metrics_summary.csv", "metrics_fold.csv", "bootstrap.json", "same_day.csv",
-                "train_log.csv", "run_config.json", "log.txt", "figure_data.json"]
+                "train_log.csv", "run_config.json", "log.txt", "figure_data.json",
+                "target_calibration.md", "target_calibration.csv"]
 EXAMPLE_COND = (1000, 15, 5, 10)  # rpm, yük, dosya (parça), klip
 
 
