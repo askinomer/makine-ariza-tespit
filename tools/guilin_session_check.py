@@ -10,7 +10,9 @@ Varyantlar:
   seviye_var   : ham log mel (ses seviyesi dahil)
   seviye_yok   : her kliple log mel ortalaması (genel seviye) çıkarılır → yalnızca spektral ŞEKİL
   tek_model    : 9 koşulun normal parça 1-3'ü birleştirilir, tek model (koşul bilgisi yok)
-Ek: normal parçaların model skoru ortalaması (parça 1-3 → 4 → 5) = aynı kayıt içi kayma.
+Kontrol (asıl): model bir koşulun normaliyle öğrenilir; DİĞER 8 koşulun normal kayıtları da skorlanır (farklı oturum, arıza değil).
+  AUC(arıza vs diğer-koşul normal) ≈ 0,5 ise sinyal koşul/oturum farkından ayrılamıyor; ≈ 1 ise arıza, koşul farkından da fazla.
+Ek: kayma = parça 1-2 ile öğrenip parça 3,4,5'i (hepsi görülmemiş) skorlar; normal parçaların model skoru ortalaması (parça 1-3 → 4 → 5) = aynı kayıt içi kayma.
 Sonuç AUC'leri optimistiktir: normal ve arıza farklı oturumlardan; yalnızca "ayrım şekil/seviye mi" sorusuna bakar.
 """
 from __future__ import annotations
@@ -70,7 +72,7 @@ def main():
     df = features(Path(a.wav), out)
     cols = [f"f{i}" for i in range(128)]
     faults = [l for l in df.label.unique() if l != "normal"]
-    rows, drift = [], []
+    rows, drift, ctrl = [], [], []
     conds = sorted(df[["rpm", "load"]].drop_duplicates().itertuples(index=False))
 
     for variant in ("seviye_var", "seviye_yok", "tek_model"):
@@ -85,8 +87,16 @@ def main():
             lw = pooled or LedoitWolf().fit(f(n[n.part <= 3][cols].values))
             s_test = lw.mahalanobis(f(n[n.part == 5][cols].values))
             if variant != "tek_model":
+                lw12 = LedoitWolf().fit(f(n[n.part <= 2][cols].values))
                 for p in (3, 4, 5):
-                    drift.append(dict(rpm=rpm, load=load, part=p, skor=np.median(lw.mahalanobis(f(n[n.part == p][cols].values)))))
+                    drift.append(dict(rpm=rpm, load=load, part=p, skor=np.median(lw12.mahalanobis(f(n[n.part == p][cols].values)))))
+                other = df[(df.label == "normal") & ((df.rpm != rpm) | (df.load != load))]
+                s_oth = lw.mahalanobis(f(other[cols].values))
+                rows.append(dict(variant=variant, rpm=rpm, load=load, fault="diğer_koşul_normal", auc=auc(s_test, s_oth)))
+                for fl in faults:
+                    s_f = lw.mahalanobis(f(c[c.label == fl][cols].values))
+                    ctrl.append(dict(variant=variant, rpm=rpm, load=load, fault=fl, auc_vs_other_cond=auc(s_oth, s_f),
+                                     fault_med=np.median(s_f), other_med=np.median(s_oth), test_med=np.median(s_test)))
             for fl in faults:
                 s_f = lw.mahalanobis(f(c[c.label == fl][cols].values))
                 rows.append(dict(variant=variant, rpm=rpm, load=load, fault=fl, auc=auc(s_test, s_f)))
@@ -97,11 +107,20 @@ def main():
     print(r.pivot_table(index="variant", columns="fault", values="auc", aggfunc="mean").round(3))
     print("\nEn düşük koşul AUC'si:")
     print(r.pivot_table(index="variant", columns="fault", values="auc", aggfunc="min").round(3))
+    cdf = pd.DataFrame(ctrl)
+    cdf.to_csv(out / "session_check_control.csv", index=False)
+    print("\nASIL KONTROL — AUC(arıza vs diğer-koşul NORMAL), 9 koşul ortalaması / en düşük:")
+    print(cdf.pivot_table(index="variant", columns="fault", values="auc_vs_other_cond", aggfunc=["mean", "min"]).round(3))
+    print("\nAyrıca: öğrenilen koşulun tutulan normali ile diğer-koşul normali ayrımı (AUC), 9 koşul ortalaması:")
+    print(r[r.fault == "diğer_koşul_normal"].groupby("variant").auc.mean().round(3).to_string())
+    print("\nMedyan skor oranı (arıza / diğer-koşul normal), 9 koşul medyanı:")
+    cdf["oran"] = cdf.fault_med / cdf.other_med
+    print(cdf.pivot_table(index="variant", columns="fault", values="oran", aggfunc="median").round(2))
     d = pd.DataFrame(drift)
     d["skor_göreli"] = d.groupby(["rpm", "load"]).skor.transform(lambda s: s / s.iloc[0])
-    print("\nNormal parçalarda model skoru (parça 3 = 1.0): kayıt içi kayma")
+    print("\nKayıt içi kayma (parça 1-2 ile öğrenildi; parça 3 = 1.0, hepsi görülmemiş)")
     print(d.pivot_table(index=["rpm", "load"], columns="part", values="skor_göreli").round(2))
-    lvl = df.groupby("label").apply(lambda g: g[cols[:64]].mean(axis=1).mean()).round(2)
+    lvl = df.assign(lv=df[cols[:64]].mean(axis=1)).groupby("label").lv.mean().round(2)
     print("\nKlip başına ortalama log mel (dB, genel seviye göstergesi):")
     print(lvl.to_string())
 
