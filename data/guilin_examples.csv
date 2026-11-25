@@ -1,0 +1,6 @@
+path,split,machine_type,machine_id,label,durum
+app/examples/guilin/normal_1000r_15_f5_c010.wav,test,rulman,tum_kosullar,normal,normal
+app/examples/guilin/outer_1000r_15_f5_c010.wav,test,rulman,tum_kosullar,anomaly,outer
+app/examples/guilin/inner_1000r_15_f5_c010.wav,test,rulman,tum_kosullar,anomaly,inner
+app/examples/guilin/cage_1000r_15_f5_c010.wav,test,rulman,tum_kosullar,anomaly,cage
+app/examples/guilin/compound_1000r_15_f5_c010.wav,test,rulman,tum_kosullar,anomaly,compound

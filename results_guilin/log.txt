@@ -1,0 +1,5 @@
+2940 klip, 9 koşul, cihaz cpu
+Son IF modeli → /content/guilin_ckpt/iforest/rulman/tum_kosullar (eşik 0.5329)
+    tohum 42: 1620 klip / 9720 pencere, 1,117,361 parametre, en iyi epoch 78/80, doğrulama 0.1748
+Son CNN AE modeli → /content/guilin_ckpt/cnn_ae/seed42/rulman/tum_kosullar (eşik 0.24685)
+Bitti (yalnızca demo modelleri) · 2125 s
