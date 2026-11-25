@@ -120,7 +120,7 @@ def main():
 
     audio_bytes, name, true_label = None, None, None
     if source == "WAV yükle":
-        up = st.file_uploader("WAV kaydı (yaklaşık 10 s, tek kanal, 16 kHz önerilir)", type=["wav"])
+        up = st.file_uploader(f"WAV kaydı (yaklaşık 10 s, tek kanal, {cfg.get('app', {}).get('sr_hint', '16 kHz')} önerilir)", type=["wav"])
         if up is not None:
             audio_bytes, name = up.getvalue(), up.name
     else:
@@ -148,7 +148,8 @@ def main():
                 "- Skor, kalibrasyon kayıtlarından belirlenen eşikle karşılaştırılır (normal kayıtların "
                 "yaklaşık %5'i eşiği aşacak şekilde).\n"
                 "- Arızanın **nedenini** (ör. rulman) veya kalan ömrü tahmin etmez.\n"
-                "- Anomali skoru kalibre edilmiş bir **arıza olasılığı değildir**.")
+                "- Anomali skoru kalibre edilmiş bir **arıza olasılığı değildir**."
+                + cfg.get("app", {}).get("limit_note", ""))
         return
 
     st.audio(audio_bytes, format="audio/wav")

@@ -21,8 +21,8 @@ def test_autoencoder_shapes():
 
 def test_autoencoder_output_unbounded():
     """Son katmanda sigmoid yok: negatif değer üretebilmeli."""
-    m = ConvAutoencoder()
     torch.manual_seed(0)
+    m = ConvAutoencoder()
     out = m(torch.randn(8, 1, 64, 64))
     assert out.min() < 0
 

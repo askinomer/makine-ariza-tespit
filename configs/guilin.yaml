@@ -17,4 +17,6 @@ data:
   silence_rms: 1.0e-5
 
 app:
+  sr_hint: "32,768 Hz"
+  limit_note: "\n- **Eşik çalışma koşuluna bağlıdır:** arızaları ayırma gücü (AUC) görülmemiş koşullarda da yüksektir, ancak eğitim koşullarından alınan sabit eşik yeni bir hız/yükte yanlış alarm verir (raporda Bölüm 8). Yeni bir koşulda eşiği o koşulun ilk normal kaydıyla yeniden kalibre edin."
   caption: "Guilin çok koşullu akustik rulman veri seti · 800–1200 rpm, %0–30 yük"
