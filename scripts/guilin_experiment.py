@@ -376,6 +376,8 @@ def main():
     ap.add_argument("--patience", type=int, default=None)
     ap.add_argument("--n-boot", type=int, default=300)
     ap.add_argument("--skip-final", action="store_true")
+    ap.add_argument("--final-only", action="store_true",
+                    help="Yalnızca demo modellerini eğit (koşul-dışı bırakma deneyi ve gürültü önbelleği atlanır)")
     a = ap.parse_args()
     if a.max_epochs:
         ACFG["max_epochs"] = a.max_epochs
@@ -395,6 +397,12 @@ def main():
     t0 = time.time()
     tab = load_table(wav)
     log(f"{len(tab)} klip, {tab.cond.nunique()} koşul, cihaz {device}")
+    if a.final_only:
+        tab = tab[tab.label == "normal"].reset_index(drop=True)
+        Ls = {"temiz": logmel_cache(tab, wav, out / "final_only", "temiz")}
+        final_models(tab, Ls, ckpt, device, log)
+        log(f"Bitti (yalnızca demo modelleri) · {time.time() - t0:.0f} s")
+        return
     Ls = {k: logmel_cache(tab, wav, out, k) for k in NOISES}
     log(f"Log mel önbelleği hazır: {Ls['temiz'].shape} · {time.time() - t0:.0f} s")
     S = run_folds(tab, Ls, out, a.seeds, device, log)

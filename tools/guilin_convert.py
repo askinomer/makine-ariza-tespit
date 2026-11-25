@@ -128,6 +128,7 @@ def main():
     ap.add_argument("--clip-s", type=float, default=10.0)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--limit", type=int, default=0, help=">0: etiket başına en fazla bu kadar kaynak dosya (deneme)")
+    ap.add_argument("--match", default=None, help="Yalnızca adı bu düzenli ifadeye uyan kaynak dosyalar (ör. '1000r-15%%-32Khz\\.5')")
     ap.add_argument("--local-files", nargs="*", default=None)
     a = ap.parse_args()
     out = Path(a.out)
@@ -142,6 +143,8 @@ def main():
             files = sorted(list_remote(label), key=lambda e: e["name"])
             if len(files) != 45:
                 print(f"UYARI: {label} için {len(files)} dosya listelendi (beklenen 45).")
+            if a.match:
+                files = [e for e in files if re.search(a.match, e["name"])]
             jobs += [(e, None) for e in (files[:a.limit] if a.limit else files)]
     print(f"{len(jobs)} kaynak dosya, kanal {a.channel}, {a.clip_s:g} sn'lik klipler → {out}", flush=True)
 

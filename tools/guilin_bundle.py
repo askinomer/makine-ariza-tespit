@@ -34,7 +34,7 @@ def main():
         rd = root / "results_guilin"
         rd.mkdir()
         for f in RESULT_FILES:
-            if (res / f).exists():
+            if (res / f).exists():  # --final-only çalıştırmasında yalnızca var olanlar
                 shutil.copy(res / f, rd / f)
         if (res / "figures").exists():
             shutil.copytree(res / "figures", rd / "figures")
